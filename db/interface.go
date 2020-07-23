@@ -1,9 +1,8 @@
 package db
 
-import "fuse_file_system/model"
-
 type IDao interface {
-	FindOne(param model.Param)(string,error)
-	Insert(param model.Param)(interface{},error)
-	Delete(param model.Param)(interface{},error)
+	FindOne(sql string, param []interface{}, values ...interface{}) error
+	Insert(sql string, param []interface{}) (interface{}, error)
+	Delete(sql string, param []interface{}) (interface{}, error)
+	List(sql string, param []interface{}) (interface{}, error)
 }
