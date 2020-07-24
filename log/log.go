@@ -13,6 +13,7 @@ import (
 
 var Logger *logrus.Logger
 
+
 func InitLogger(logPath string, logFileName string) error {
 	fileName := path.Join(logPath, logFileName)
 	var writers []io.Writer
