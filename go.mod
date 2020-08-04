@@ -22,6 +22,8 @@ replace golang.org/x/sys => github.com/golang/sys v0.0.0-20200331124033-c3d80250
 
 require (
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
+	github.com/gin-gonic/gin v1.6.3
+	github.com/gorilla/websocket v1.4.2
 	github.com/hanwen/go-fuse/v2 v2.0.3
 	github.com/ipfs/go-log/v2 v2.1.1
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
@@ -32,6 +34,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/tebeka/strftime v0.1.4 // indirect
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 )

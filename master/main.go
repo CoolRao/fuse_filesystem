@@ -14,15 +14,16 @@ import (
 
 func main() {
 
-	mountDir := "/home/abel/tmp/test"
+	mountDir := "/home/abel/tmp/fusesrc"
+	copyDir := "/home/abel/tmp/fusedest"
 	exitSig := make(chan os.Signal)
 	signal.Notify(exitSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, config.SIGUSR1, config.SIGUSR2)
 
 	err := log.InitLogger("./log", "master")
 	if err != nil {
-		lg.Fatalln("init log error ",err.Error())
+		lg.Fatalln("init log error ", err.Error())
 	}
-	fuseManage, err := fusecore.NewFuseManage(mountDir)
+	fuseManage, err := fusecore.NewFuseManage(mountDir,copyDir)
 	if err != nil {
 		lg.Fatalln(err.Error())
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-
+var copyDir string
 
 type FuseManage struct {
 	server  *fuse.Server
@@ -16,19 +16,20 @@ type FuseManage struct {
 	timerId cron.EntryID
 }
 
-func NewFuseManage(mountPath string,) (*FuseManage, error) {
+func NewFuseManage(mountPath, dest string) (*FuseManage, error) {
 	opts := &fs.Options{}
 	opts.Debug = false
-	opts.Options=[]string{"nonempty"}
-	root := NewRoot()
+	opts.Options = []string{"nonempty"}
+	copyDir = dest
+	root := NewRoot(mountPath, dest)
 	server, err := fs.Mount(mountPath, root, opts)
 	if err != nil {
 		return nil, err
 	}
 	return &FuseManage{
-		server:  server,
-		root:    root,
-		timer:   cron.New(cron.WithSeconds()),
+		server: server,
+		root:   root,
+		timer:  cron.New(cron.WithSeconds()),
 	}, nil
 }
 
@@ -41,4 +42,3 @@ func (fm *FuseManage) Close() error {
 
 	return nil
 }
-
