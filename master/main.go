@@ -18,11 +18,7 @@ func main() {
 	copyDir := "/home/abel/tmp/fusedest"
 	exitSig := make(chan os.Signal)
 	signal.Notify(exitSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, config.SIGUSR1, config.SIGUSR2)
-
-	err := log.InitLogger("./log", "master")
-	if err != nil {
-		lg.Fatalln("init log error ", err.Error())
-	}
+	log.InitLogger()
 	fuseManage, err := fusecore.NewFuseManage(mountDir,copyDir)
 	if err != nil {
 		lg.Fatalln(err.Error())

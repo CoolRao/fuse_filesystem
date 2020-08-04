@@ -41,7 +41,6 @@ func (ws *WsClient) read() {
 			msgType, bytes, err := ws.socket.ReadMessage()
 			if err != nil {
 				log.Logger.Errorf("ws client read error %s ", err.Error())
-				ws.retryConn()
 				continue
 			}
 			switch msgType {
@@ -55,8 +54,8 @@ func (ws *WsClient) read() {
 				ws.heartTime = time.Now()
 				break
 			case websocket.CloseMessage:
-				log.Logger.Warnf("wc client recv close message %s ", string(bytes))
-				ws.close()
+				log.Logger.Warnf("wc client recv Close message %s ", string(bytes))
+				ws.Close()
 				break
 			case websocket.TextMessage:
 				log.Logger.Debugf("ws client recv text message %s ", string(bytes))
@@ -96,14 +95,11 @@ func (ws *WsClient) heartBeat() {
 			log.Logger.Warnf("ws client exit heart beat  %s ", exit)
 			return
 		default:
-			time.Sleep(5 * time.Minute)
-			if ws.isTimeOut() {
-				log.Logger.Warnf("heart time time out  ,start retry connect")
+			err := ws.socket.WriteMessage(websocket.PingMessage, []byte("hello"))
+			if err != nil {
+				log.Logger.Errorf("client ping message error %s ", err.Error())
 				ws.retryConn()
-				continue
-			} else {
-				ws.send <- SendMsg{Type: websocket.PingMessage, Body: []byte("hello")}
-				log.Logger.Infof("send heart beat ")
+				time.Sleep(5 * time.Minute)
 			}
 		}
 	}
@@ -119,7 +115,6 @@ func (ws *WsClient) write() {
 			err := ws.socket.WriteMessage(msg.Type, msg.Body)
 			if err != nil {
 				log.Logger.Errorf("ws client write error %s ", err.Error())
-				ws.retryConn()
 				continue
 			}
 			log.Logger.Debugf("ws client write : type: %d  body:  %s ", msg.Type, string(msg.Body))
@@ -128,25 +123,30 @@ func (ws *WsClient) write() {
 }
 
 func (ws *WsClient) retryConn() {
-	time.Sleep(3 * time.Second)
-	log.Logger.Warnf("ws client retry connect %s ", ws.host)
-	err := ws.dial()
-	if err != nil {
-		log.Logger.Errorf("ws client connect %s error %s ", ws.host, err.Error())
+	for {
+		time.Sleep(5 * time.Second)
+		log.Logger.Warnf("ws client retry connect %s ", ws.host)
+		err := ws.dial()
+		if err != nil {
+			log.Logger.Errorf("ws client connect %s error %s ", ws.host, err.Error())
+		} else {
+			return
+		}
 	}
+
 }
 
 func (ws *WsClient) closeSocket() {
 	if ws.socket != nil {
 		err := ws.socket.Close()
 		if err != nil {
-			log.Logger.Errorf("ws client socket close error %s ", err.Error())
+			log.Logger.Errorf("ws client socket Close error %s ", err.Error())
 		}
 	}
 }
 
-func (ws *WsClient) close() {
-	log.Logger.Warnf("ws client close ")
+func (ws *WsClient) Close() {
+	log.Logger.Warnf("ws client Close ")
 	ws.closeSocket()
 	ws.exitR <- "exit read"
 	ws.exitW <- "exit write"
@@ -158,15 +158,11 @@ func (ws *WsClient) Run() error {
 	if err != nil {
 		return err
 	}
-	defer ws.close()
+	defer ws.Close()
 	go ws.read()
 	go ws.write()
 	go ws.heartBeat()
 	select {}
-
-}
-
-func (ws *WsClient) run() {
 
 }
 
@@ -178,6 +174,9 @@ func (ws *WsClient) dial() error {
 	}
 	ws.socket = conn
 	// 连接成功之后发心跳
-	ws.Write(SendMsg{Type: websocket.PingMessage, Body: []byte("hello")})
+	err = ws.socket.WriteMessage(websocket.PingMessage, []byte("hello"))
+	if err != nil {
+		return err
+	}
 	return nil
 }

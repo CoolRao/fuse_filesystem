@@ -46,6 +46,7 @@ func (c *Client) read() {
 				log.Logger.Errorf("c client read error %s ", err.Error())
 				continue
 			}
+			log.Logger.Warnln(msgType, string(bytes))
 			switch msgType {
 			case websocket.PingMessage:
 				log.Logger.Infof("c client recv ping message %s ", string(bytes))
@@ -57,7 +58,7 @@ func (c *Client) read() {
 				c.heartTime = time.Now()
 				break
 			case websocket.CloseMessage:
-				log.Logger.Warnf("wc client recv close message %s ", string(bytes))
+				log.Logger.Warnf("wc client recv Close message %s ", string(bytes))
 				c.close()
 				break
 			case websocket.TextMessage:
@@ -99,13 +100,12 @@ func (c *Client) heartBeat() {
 			return
 		default:
 			time.Sleep(5 * time.Minute)
-			if c.isTimeOut() {
-				log.Logger.Warnf("heart time time out  ,start retry connect")
-				continue
-			} else {
-				c.send <- SendMsg{Type: websocket.PingMessage, Body: []byte("hello")}
-				log.Logger.Infof("send heart beat ")
+			err := c.socket.WriteMessage(websocket.PingMessage, []byte("hello"))
+			if err != nil {
+				log.Logger.Errorf("client ping message error %s ", err.Error())
+				c.close()
 			}
+
 		}
 	}
 }
@@ -127,12 +127,11 @@ func (c *Client) write() {
 	}
 }
 
-
 func (c *Client) closeSocket() {
 	if c.socket != nil {
 		err := c.socket.Close()
 		if err != nil {
-			log.Logger.Errorf("c client socket close error %s ", err.Error())
+			log.Logger.Errorf("c client socket Close error %s ", err.Error())
 		}
 	}
 }

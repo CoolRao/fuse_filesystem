@@ -1,15 +1,22 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"fuse_file_system/log"
+	lg "log"
 )
 
+var host string
+var workDir string
+
 func main() {
-	err := log.InitLogger("./log", "slave.log")
-	if err!=nil{
-		fmt.Println(err.Error())
+	flag.StringVar(&host, "host", "0.0.0.0:9999", "work host")
+	flag.StringVar(&workDir, "workDir", "/home/abel/tmp/fusedest", "work path")
+	flag.Parse()
+	log.InitLogger()
+	client := NewFileHandler(host,workDir)
+	err := client.run()
+	if err != nil {
+		lg.Fatal(err.Error())
 	}
-	log.Logger.Infof(" %s","xjrw ")
-	log.Logger.Infof(" %s \n","xjrw ")
 }
