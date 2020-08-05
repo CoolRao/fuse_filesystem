@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"fuse_file_system/config"
 	"fuse_file_system/log"
 	"fuse_file_system/model"
 	"fuse_file_system/ws"
@@ -33,7 +34,7 @@ func (fh *FileHandler) Close() {
 	fh.exit <- "exit"
 }
 
-func (fh *FileHandler) sync() {
+func (fh *FileHandler) run() {
 	for {
 		select {
 		case <-fh.exit:
@@ -47,14 +48,14 @@ func (fh *FileHandler) sync() {
 				continue
 			}
 			switch msg.MsgType {
-			case ws.FileSyncAttr:
+			case config.FileSyncAttr:
 				result, err := fh.SyncFileAttr(msg.DirType)
 				if err != nil {
 					log.Logger.Errorf("file state fail %s \n", err.Error())
 				}
 				fh.send(msg, result)
 				break
-			case ws.FileReadType:
+			case config.FileReadType:
 				log.Logger.Warnln(string(bytes.Body))
 				result, err := fh.FileRead(msg.FileName, msg.Size, msg.Off)
 				if err != nil {
@@ -62,7 +63,7 @@ func (fh *FileHandler) sync() {
 				}
 				fh.send(msg, result)
 				break
-			case ws.FileStateType:
+			case config.FileStateType:
 				result, err := fh.FileState(msg.FileName)
 				if err != nil {
 					log.Logger.Errorf("file state fail %s \n", err.Error())
@@ -85,9 +86,9 @@ func (fh *FileHandler) send(msg ws.Message, result []byte) {
 	fh.client.Write(ws.SendMsg{Type: websocket.TextMessage, Body: content})
 }
 
-func (fh *FileHandler) run() error {
+func (fh *FileHandler) Run() error {
 
-	go fh.sync()
+	go fh.run()
 
 	defer fh.Close()
 

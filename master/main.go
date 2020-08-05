@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"fuse_file_system/config"
 	"fuse_file_system/fusecore"
@@ -12,14 +13,19 @@ import (
 	"syscall"
 )
 
+
+var host string
+var mountDir string
+
 func main() {
 
-	mountDir := "/home/abel/tmp/fusesrc"
 	copyDir := "/home/abel/tmp/fusedest"
+	flag.StringVar(&host,"host","0.0.0.0:8888","host addr ")
+	flag.StringVar(&mountDir,"mountDir","/home/abel/tmp/fusesrc","mount dir path ")
 	exitSig := make(chan os.Signal)
 	signal.Notify(exitSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, config.SIGUSR1, config.SIGUSR2)
 	log.InitLogger()
-	fuseManage, err := fusecore.NewFuseManage(mountDir,copyDir)
+	fuseManage, err := fusecore.NewFuseManage(mountDir,copyDir,host)
 	if err != nil {
 		lg.Fatalln(err.Error())
 	}

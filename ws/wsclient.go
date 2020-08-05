@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"fuse_file_system/config"
 	"fuse_file_system/log"
 	"github.com/gorilla/websocket"
 	"net/url"
@@ -35,13 +36,13 @@ func (ws *WsClient) read() {
 	for {
 		select {
 		case exit := <-ws.exitR:
-			log.Logger.Warnf("ws client exit read  %s", exit)
+			log.Logger.Warnf("ws client exit Read  %s", exit)
 			return
 		default:
 			msgType, bytes, err := ws.socket.ReadMessage()
 			if err != nil {
-				log.Logger.Errorf("ws client read error %s ", err.Error())
-				continue
+				log.Logger.Errorf("ws client Read error %s ", err.Error())
+				ws.retryConn()
 			}
 			switch msgType {
 			case websocket.PingMessage:
@@ -109,15 +110,15 @@ func (ws *WsClient) write() {
 	for {
 		select {
 		case exit := <-ws.exitW:
-			log.Logger.Warnf("ws client exit write %s ", exit)
+			log.Logger.Warnf("ws client exit Write %s ", exit)
 			return
 		case msg := <-ws.send:
 			err := ws.socket.WriteMessage(msg.Type, msg.Body)
 			if err != nil {
-				log.Logger.Errorf("ws client write error %s ", err.Error())
-				continue
+				log.Logger.Errorf("ws client Write error %s ", err.Error())
+				ws.retryConn()
 			}
-			log.Logger.Debugf("ws client write : type: %d  body:  %s ", msg.Type, string(msg.Body))
+			log.Logger.Debugf("ws client Write : type: %d  body:  %s ", msg.Type, string(msg.Body))
 		}
 	}
 }
@@ -148,8 +149,8 @@ func (ws *WsClient) closeSocket() {
 func (ws *WsClient) Close() {
 	log.Logger.Warnf("ws client Close ")
 	ws.closeSocket()
-	ws.exitR <- "exit read"
-	ws.exitW <- "exit write"
+	ws.exitR <- "exit Read"
+	ws.exitW <- "exit Write"
 	ws.exitH <- "exit heart beat"
 }
 
@@ -167,7 +168,7 @@ func (ws *WsClient) Run() error {
 }
 
 func (ws *WsClient) dial() error {
-	u := url.URL{Scheme: "ws", Host: ws.host, Path: ConnPath}
+	u := url.URL{Scheme: "ws", Host: ws.host, Path: config.ConnPath}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		return err

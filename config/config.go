@@ -7,3 +7,10 @@ const SIGUSR1 = syscall.Signal(0xa)
 
 // SIGUSR2 linux SIGUSR2
 const SIGUSR2 = syscall.Signal(0xc)
+
+const (
+	FileStateType = iota + 1
+	FileReadType
+	FileSyncAttr
+)
+const ConnPath = "/v1/conn"

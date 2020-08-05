@@ -1,6 +1,7 @@
 package fusecore
 
 import (
+	"fuse_file_system/ws"
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 	"github.com/robfig/cron/v3"
@@ -8,15 +9,18 @@ import (
 
 var copyDir string
 
+var ClientManager *ws.Manger
+
 type FuseManage struct {
 	server  *fuse.Server
 	root    *Root
 	dirType int64
 	timer   *cron.Cron
 	timerId cron.EntryID
+	host    string
 }
 
-func NewFuseManage(mountPath, dest string) (*FuseManage, error) {
+func NewFuseManage(mountPath, dest string, host string) (*FuseManage, error) {
 	opts := &fs.Options{}
 	opts.Debug = false
 	opts.Options = []string{"nonempty"}
@@ -29,11 +33,14 @@ func NewFuseManage(mountPath, dest string) (*FuseManage, error) {
 	return &FuseManage{
 		server: server,
 		root:   root,
+		host:host,
 		timer:  cron.New(cron.WithSeconds()),
 	}, nil
 }
 
 func (fm *FuseManage) Run() error {
+	ClientManager =ws.NewManger()
+	go NewWebSocketServer(fm.host)
 	fm.server.Wait()
 	return nil
 }

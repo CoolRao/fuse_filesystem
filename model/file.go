@@ -16,6 +16,7 @@ type FileStat struct {
 	ModTime time.Time   `json:"modTime"`
 	IsDir   bool        `json:"isDir"`
 	Sys     interface{} `json:"sys"`
+	Ip      string      `json:"ip"`
 }
 
 func (fs *FileStat) GetSize() int64        { return fs.Size }
@@ -32,4 +33,3 @@ func CovertFileState(fileInfo os.FileInfo) FileStat {
 		Sys:     fileInfo.Sys(),
 	}
 }
-

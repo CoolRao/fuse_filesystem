@@ -1,6 +1,4 @@
-package ws
-
-
+package model
 
 type SendMsg struct {
 	Type int

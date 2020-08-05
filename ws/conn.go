@@ -34,16 +34,16 @@ func NewClient(Ip string, conn *websocket.Conn) *Client {
 	}
 }
 
-func (c *Client) read() {
+func (c *Client) Read() {
 	for {
 		select {
 		case exit := <-c.exitR:
-			log.Logger.Warnf("c client exit read  %s", exit)
+			log.Logger.Warnf("c client exit Read  %s", exit)
 			return
 		default:
 			msgType, bytes, err := c.socket.ReadMessage()
 			if err != nil {
-				log.Logger.Errorf("c client read error %s ", err.Error())
+				log.Logger.Errorf("c client Read error %s ", err.Error())
 				continue
 			}
 			log.Logger.Warnln(msgType, string(bytes))
@@ -77,12 +77,12 @@ func (c *Client) read() {
 	}
 }
 
-func (c *Client) Read() chan RecvMsg {
+func (c *Client) Recv() chan RecvMsg {
 	return c.recv
 }
 
-func (c *Client) Write() {
-
+func (c *Client) Send(msg SendMsg) {
+	c.send <- msg
 }
 
 func (c *Client) isTimeOut() bool {
@@ -92,7 +92,7 @@ func (c *Client) isTimeOut() bool {
 	return false
 }
 
-func (c *Client) heartBeat() {
+func (c *Client) HeartBeat() {
 	for {
 		select {
 		case exit := <-c.exitH:
@@ -110,19 +110,19 @@ func (c *Client) heartBeat() {
 	}
 }
 
-func (c *Client) write() {
+func (c *Client) Write() {
 	for {
 		select {
 		case exit := <-c.exitW:
-			log.Logger.Warnf("c client exit write %s ", exit)
+			log.Logger.Warnf("c client exit Write %s ", exit)
 			return
 		case msg := <-c.send:
 			err := c.socket.WriteMessage(msg.Type, msg.Body)
 			if err != nil {
-				log.Logger.Errorf("c client write error %s ", err.Error())
+				log.Logger.Errorf("c client Write error %s ", err.Error())
 				continue
 			}
-			log.Logger.Debugf("c client write : %d %s ", msg.Type, string(msg.Body))
+			log.Logger.Debugf("c client Write : %d %s ", msg.Type, string(msg.Body))
 		}
 	}
 }
@@ -138,8 +138,8 @@ func (c *Client) closeSocket() {
 
 func (c *Client) close() {
 	c.closeSocket()
-	c.exitR <- "exit read"
-	c.exitW <- "exit write"
+	c.exitR <- "exit Read"
+	c.exitW <- "exit Write"
 	c.exitH <- "exit heart beat"
 	clientManager.UnRegister <- c
 }
