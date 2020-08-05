@@ -2,13 +2,12 @@ package fusecore
 
 import (
 	"context"
-	"fmt"
 	"fuse_file_system/log"
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
-	"io/ioutil"
 	"os"
 	"syscall"
+	"time"
 )
 
 type Dir struct {
@@ -19,30 +18,13 @@ type Dir struct {
 }
 
 func (d *Dir) OnAdd(ctx context.Context) {
-	path := fmt.Sprintf("%s/%s", copyDir, d.path())
-	fileInfos, err := ioutil.ReadDir(path)
-	if err != nil {
-		log.Logger.Errorf("dir onAdd: %s", err.Error())
-		return
-	}
-	for i := 0; i < len(fileInfos); i++ {
-		info := fileInfos[i]
-		if info.IsDir() {
-			log.Logger.Debugf("dir OnAdd: %s ",info.Name())
-			d.NewInode(ctx, &Dir{}, fs.StableAttr{Mode: fuse.S_IFDIR})
-		} else {
-			log.Logger.Debugf("dir OnAdd: %s ",info.Name())
-			d.NewInode(ctx, &File{}, fs.StableAttr{Mode: fuse.S_IFREG})
-		}
-	}
+	log.Logger.Debugf("dir onAdd: %s ", d.name)
 }
 
 func (d *Dir) Getattr(ctx context.Context, fh fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
 	log.Logger.Debugf("dir getattr:  %s ", d.name)
-	out.Mode = fuse.S_IFDIR
-	out.Size = 1024
 	path := d.path()
-	stat, err := os.Stat(fmt.Sprintf("%s/%s", copyDir, path))
+	stat, err := os.Stat(getRemotePath(path))
 	if err != nil {
 		return syscall.EIO
 	}
@@ -56,6 +38,25 @@ func (d *Dir) path() string {
 	return d.Path(d.Root())
 }
 
+func (d *Dir) Create(ctx context.Context, name string, flags uint32, mode uint32, out *fuse.EntryOut) (node *fs.Inode, fh fs.FileHandle, fuseFlags uint32, errno syscall.Errno) {
+	log.Logger.Debugf("dir Create: %s  %d %d", name, flags, mode)
+	file, err := os.Create(getRemotePath(name))
+	if err != nil {
+		return nil, nil, 0, syscall.EIO
+	}
+	stat, err := file.Stat()
+	if err!=nil{
+		return nil,nil,0,syscall.EIO
+	}
+	out.Mode= uint32(stat.Mode())
+	out.Size= uint64(stat.Size())
+	out.Mtime= uint64(stat.ModTime().Unix())
+	out.Ctime= uint64(time.Now().Unix())
+	out.Atime= uint64(time.Now().Unix())
+	newInode := d.NewInode(ctx, &File{name:name}, fs.StableAttr{Mode: fuse.S_IFREG})
+	return newInode, Handle{}, 0, syscall.F_OK
+}
+
 func (d *Dir) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
 	log.Logger.Debug("dir lookup: ", name, out)
 	inode := d.GetChild(name)
@@ -67,15 +68,14 @@ func (d *Dir) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.
 
 func (d *Dir) Mknod(ctx context.Context, name string, mode uint32, dev uint32, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
 	log.Logger.Debugf("dir mknod:  %s %d %d", name, mode, dev)
-	newNode := d.NewInode(ctx, &File{}, fs.StableAttr{Mode: fuse.S_IFDIR})
+	newNode := d.NewInode(ctx, &File{name:name}, fs.StableAttr{Mode: fuse.S_IFDIR})
 	return newNode, syscall.F_OK
 }
 
 func (d *Dir) Mkdir(ctx context.Context, name string, mode uint32, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
 	log.Logger.Debugf("dir mkdir:  %s %d %v", name, mode, out)
 	newInode := d.NewInode(ctx, &Dir{}, fs.StableAttr{Mode: fuse.S_IFDIR})
-	// todo
-	err := os.Mkdir(fmt.Sprintf("%s/%s", copyDir, name), os.ModeDir)
+	err := os.Mkdir(getRemotePath(name), os.ModeDir)
 	if err != nil {
 		return nil, syscall.EIO
 	}

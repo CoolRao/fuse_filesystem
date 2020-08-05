@@ -24,12 +24,12 @@ func NewRoot(path string, dest string) *Root {
 
 func (r *Root) Getattr(ctx context.Context, f fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
 	log.Logger.Infoln("root getattr: ", out)
-	out.Mode = fuse.S_IFDIR
+	out.Mode=fuse.S_IFDIR
 	return syscall.F_OK
 
 }
 
 func (r *Root) Statfs(ctx context.Context, out *fuse.StatfsOut) syscall.Errno {
-
+	log.Logger.Debugf("root Statfs: ")
 	return syscall.F_OK
 }

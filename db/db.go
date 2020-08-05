@@ -17,7 +17,6 @@ func Init(dbPath string) error {
 }
 
 func GetDb() *sql.DB {
-	// todo nil?
 	return db
 }
 

@@ -5,9 +5,9 @@ import (
 	"fuse_file_system/log"
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
+	"os"
 	"path/filepath"
 	"syscall"
-	"time"
 )
 
 type File struct {
@@ -21,29 +21,30 @@ func (f *File) path() string {
 	return filepath.Join(f.root().rootPath, path)
 }
 
-func (n *File) root() *Root {
-	return n.Root().Operations().(*Root)
+func (f *File) root() *Root {
+	return f.Root().Operations().(*Root)
 }
 
 func (f *File) Getattr(ctx context.Context, fh fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
-	log.Logger.Infoln("file getattr: ", f.name)
-	out.Mode = fuse.S_IFREG
-	out.Size = 1024
-	out.Atime = uint64(time.Now().Unix())
+	log.Logger.Debugf("file getattr: ", f.name)
+	stat, err := os.Stat(getRemotePath(f.name))
+	if err != nil {
+		return syscall.EIO
+	}
+	out.Mode = uint32(stat.Mode())
+	out.Size = uint64(stat.Size())
+	out.Mtime = uint64(stat.ModTime().Unix())
 	return syscall.F_OK
 }
 
-func (f *File) Write(ctx context.Context, data []byte, off int64) (written uint32, errno syscall.Errno) {
-	log.Logger.Infoln("file write: ")
-	return 1024, syscall.F_OK
-}
-
 func (f *File) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFlags uint32, errno syscall.Errno) {
+	log.Logger.Debugf("file Open:  %s", f.name)
+	flags = flags &^ syscall.O_APPEND
 	lf := NewHandle(0, f.name)
-	return lf, fuse.FOPEN_KEEP_CACHE, 0
+	return lf, flags, 0
 }
 
 func (f *File) Setattr(ctx context.Context, in *fuse.SetAttrIn, out *fuse.AttrOut) syscall.Errno {
-	log.Logger.Infoln("file setattr: ", in, out)
+	log.Logger.Debugf("file setattr:  %v  %v ", in, out)
 	return 0
 }

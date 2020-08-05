@@ -16,10 +16,10 @@ import (
 
 var host string
 var mountDir string
-
+var copyDir = "/home/abel/tmp/fusedest"
 func main() {
 
-	copyDir := "/home/abel/tmp/fusedest"
+
 	flag.StringVar(&host,"host","0.0.0.0:8888","host addr ")
 	flag.StringVar(&mountDir,"mountDir","/home/abel/tmp/fusesrc","mount dir path ")
 	exitSig := make(chan os.Signal)
@@ -49,4 +49,6 @@ func unmount(mountDir string) {
 	if err != nil {
 		fmt.Println(fmt.Sprintf("unMount dir error ", err.Error()))
 	}
+	os.RemoveAll(copyDir)
+
 }
