@@ -12,7 +12,6 @@ var copyDir string
 
 var ClientManager *ws.Manger
 
-
 type FuseManage struct {
 	server  *fuse.Server
 	root    *Root
@@ -41,15 +40,15 @@ func NewFuseManage(mountPath, dest string, host string) (*FuseManage, error) {
 }
 
 func (fm *FuseManage) Run() error {
-	ClientManager = ws.NewManger()
+	ClientManager = ws.GetClientManager()
 	log.Logger.Warnln(ClientManager)
-	go NewWebSocketServer(fm.host)
-	go ClientManager.Run()
+	go ws.NewWebSocketServer(fm.host)
+	go ws.GetClientManager().Run()
 	fm.server.Wait()
 	return nil
 }
 
 func (fm *FuseManage) Close() error {
-
+	ClientManager.Close()
 	return nil
 }

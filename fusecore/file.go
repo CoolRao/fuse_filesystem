@@ -26,10 +26,6 @@ func (f *File) root() *Root {
 
 func (f *File) Getattr(ctx context.Context, fh fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
 	log.Logger.Debugf("file getattr: %s ", f.name)
-	//stat, err := os.Stat(getRemotePath(f.name))
-	//if err != nil {
-	//	return syscall.EIO
-	//}
 	stat, err := FileState(f.name)
 	if err != nil {
 		return syscall.EIO

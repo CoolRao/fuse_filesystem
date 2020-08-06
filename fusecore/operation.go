@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"fuse_file_system/config"
-	"fuse_file_system/log"
 	"fuse_file_system/model"
 	"fuse_file_system/utils"
 	"fuse_file_system/ws"
@@ -14,20 +13,12 @@ import (
 	"time"
 )
 
-
-
-
 func getIpByFileName(fileName string) string {
 	return "127.0.0.1"
 }
 
 func FileState(fileName string) (*model.FileStat, error) {
 	ip := getIpByFileName(fileName)
-	log.Logger.Warnln(ClientManager)
-	for k,v:=range ClientManager.Clients{
-		fmt.Println(".....")
-		fmt.Println(k,v)
-	}
 	client := ClientManager.Client(ip)
 	if client == nil {
 		return nil, fmt.Errorf("client is nil %s  %s", ip, fileName)

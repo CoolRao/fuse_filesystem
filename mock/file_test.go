@@ -8,6 +8,19 @@ import (
 )
 
 
+
+
+func TestReadDest(t *testing.T){
+	bytes, err := ioutil.ReadFile("/home/abel/tmp/fusedest/test1.txt")
+	if err!=nil{
+		fmt.Println(err.Error())
+		return
+	}
+	fmt.Println(string(bytes))
+}
+
+
+
 func TestReadAll(t *testing.T){
 	bytes, err := ioutil.ReadFile("/home/abel/tmp/fusesrc/test1.txt")
 	if err!=nil{

@@ -138,5 +138,5 @@ func (c *Client) close() {
 	c.exitR <- "exit Read"
 	c.exitW <- "exit Write"
 	c.exitH <- "exit heart beat"
-	ClientManager.UnRegister <-c
+	clientManager.UnRegister <-c
 }

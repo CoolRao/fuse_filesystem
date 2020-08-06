@@ -4,7 +4,7 @@ import (
 	"fuse_file_system/log"
 )
 
-var ClientManager = NewManger()
+var clientManager = newManger()
 
 type Manger struct {
 	Register   chan *Client
@@ -13,7 +13,11 @@ type Manger struct {
 	exit       chan string
 }
 
-func NewManger() *Manger {
+func GetClientManager() *Manger {
+	return clientManager
+}
+
+func newManger() *Manger {
 	return &Manger{
 		Register:   make(chan *Client, 100),
 		UnRegister: make(chan *Client, 100),

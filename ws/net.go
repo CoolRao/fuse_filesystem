@@ -39,7 +39,7 @@ func WebSocketConnHandler(c *gin.Context) {
 		return
 	}
 	client := NewClient(c.ClientIP(), conn)
-	ClientManager.Register <- client
+	clientManager.Register <- client
 	go client.Read()
 	go client.Write()
 	go client.HeartBeat()
