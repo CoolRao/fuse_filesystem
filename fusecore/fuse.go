@@ -1,6 +1,7 @@
 package fusecore
 
 import (
+	"fuse_file_system/log"
 	"fuse_file_system/ws"
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
@@ -10,6 +11,7 @@ import (
 var copyDir string
 
 var ClientManager *ws.Manger
+
 
 type FuseManage struct {
 	server  *fuse.Server
@@ -33,14 +35,16 @@ func NewFuseManage(mountPath, dest string, host string) (*FuseManage, error) {
 	return &FuseManage{
 		server: server,
 		root:   root,
-		host:host,
+		host:   host,
 		timer:  cron.New(cron.WithSeconds()),
 	}, nil
 }
 
 func (fm *FuseManage) Run() error {
-	ClientManager =ws.NewManger()
+	ClientManager = ws.NewManger()
+	log.Logger.Warnln(ClientManager)
 	go NewWebSocketServer(fm.host)
+	go ClientManager.Run()
 	fm.server.Wait()
 	return nil
 }

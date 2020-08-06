@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"fuse_file_system/config"
+	"fuse_file_system/log"
 	"fuse_file_system/model"
 	"fuse_file_system/utils"
 	"fuse_file_system/ws"
@@ -13,17 +14,21 @@ import (
 	"time"
 )
 
+
+
+
 func getIpByFileName(fileName string) string {
 	return "127.0.0.1"
 }
 
 func FileState(fileName string) (*model.FileStat, error) {
 	ip := getIpByFileName(fileName)
-	for k,v:=range getManager().Clients{
+	log.Logger.Warnln(ClientManager)
+	for k,v:=range ClientManager.Clients{
 		fmt.Println(".....")
 		fmt.Println(k,v)
 	}
-	client := getManager().Client(ip)
+	client := ClientManager.Client(ip)
 	if client == nil {
 		return nil, fmt.Errorf("client is nil %s  %s", ip, fileName)
 	}
@@ -59,7 +64,7 @@ func FileState(fileName string) (*model.FileStat, error) {
 
 func FileRead(fileName string, size, off int64) ([]byte, error) {
 	ip := getIpByFileName(fileName)
-	client := getManager().Client(ip)
+	client := ClientManager.Client(ip)
 	if client == nil {
 		return nil, fmt.Errorf("client is nil %s  %s", ip, fileName)
 	}
@@ -96,7 +101,7 @@ func FileDirAttr(dirType string) ([]map[string]*model.FileStat, error) {
 	}
 	var res []map[string]*model.FileStat
 	wg := sync.WaitGroup{}
-	for _, client := range getManager().Clients {
+	for _, client := range ClientManager.Clients {
 		wg.Add(1)
 		go func() {
 			client.Send(ws.SendMsg{Type: websocket.TextMessage, Body: bytes})
@@ -131,6 +136,4 @@ func FileDirAttr(dirType string) ([]map[string]*model.FileStat, error) {
 
 
 
-func getManager() *ws.Manger {
-	return ClientManager
-}
+

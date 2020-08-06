@@ -5,7 +5,6 @@ import (
 	"fuse_file_system/log"
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
-	"os"
 	"path/filepath"
 	"syscall"
 )
@@ -26,14 +25,18 @@ func (f *File) root() *Root {
 }
 
 func (f *File) Getattr(ctx context.Context, fh fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
-	log.Logger.Debugf("file getattr: ", f.name)
-	stat, err := os.Stat(getRemotePath(f.name))
+	log.Logger.Debugf("file getattr: %s ", f.name)
+	//stat, err := os.Stat(getRemotePath(f.name))
+	//if err != nil {
+	//	return syscall.EIO
+	//}
+	stat, err := FileState(f.name)
 	if err != nil {
 		return syscall.EIO
 	}
-	out.Mode = uint32(stat.Mode())
-	out.Size = uint64(stat.Size())
-	out.Mtime = uint64(stat.ModTime().Unix())
+	out.Mode = uint32(stat.Mode)
+	out.Size = uint64(stat.Size)
+	out.Mtime = uint64(stat.ModTime.Unix())
 	return syscall.F_OK
 }
 

@@ -1,11 +1,10 @@
 package ws
 
 import (
-	"fmt"
 	"fuse_file_system/log"
 )
 
-var clientManager = NewManger()
+var ClientManager = NewManger()
 
 type Manger struct {
 	Register   chan *Client
@@ -16,14 +15,12 @@ type Manger struct {
 
 func NewManger() *Manger {
 	return &Manger{
-		Register:   make(chan *Client,100),
-		UnRegister: make(chan *Client,100),
+		Register:   make(chan *Client, 100),
+		UnRegister: make(chan *Client, 100),
 		Clients:    make(map[string]*Client),
 		exit:       make(chan string),
 	}
 }
-
-
 
 func (m *Manger) Close() {
 	for ip, client := range m.Clients {
@@ -33,9 +30,6 @@ func (m *Manger) Close() {
 }
 
 func (m *Manger) Client(ip string) *Client {
-	for k,v:=range m.Clients{
-		fmt.Println(k,v)
-	}
 	if client, ok := m.Clients[ip]; ok {
 		return client
 	}
@@ -49,11 +43,10 @@ func (m *Manger) Run() {
 			log.Logger.Warnf("ws manager exit %s ", exit)
 			return
 		case client := <-m.Register:
-			fmt.Println(m)
 			log.Logger.Infof("ws client registered  %s ", client.Ip)
 			m.Clients[client.Ip] = client
 		case client := <-m.UnRegister:
-			log.Logger.Infof("ws client unregistered %s ",client.Ip)
+			log.Logger.Warnf("ws client unregistered %s ", client.Ip)
 			if _, ok := m.Clients[client.Ip]; ok {
 				delete(m.Clients, client.Ip)
 			}

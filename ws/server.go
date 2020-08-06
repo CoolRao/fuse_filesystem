@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"fuse_file_system/config"
 	"fuse_file_system/log"
 	"fuse_file_system/utils"
 	"github.com/gorilla/websocket"
@@ -27,9 +28,9 @@ func NewClient(Ip string, conn *websocket.Conn) *Client {
 		Id:               utils.GetUUID(),
 		send:             make(chan SendMsg, 100),
 		recv:             make(chan RecvMsg, 100),
-		exitR:            make(chan string),
-		exitW:            make(chan string),
-		exitH:            make(chan string),
+		exitR:            make(chan string,1),
+		exitW:            make(chan string,1),
+		exitH:            make(chan string,1),
 		intervalBeatTime: 5 * 60,
 	}
 }
@@ -44,9 +45,10 @@ func (c *Client) Read() {
 			msgType, bytes, err := c.socket.ReadMessage()
 			if err != nil {
 				log.Logger.Errorf("c client Read error %s ", err.Error())
-				continue
+				c.close()
+				return
 			}
-			log.Logger.Warnln(msgType, string(bytes))
+			//log.Logger.Debugf("c client receive  %d  %s ", msgType, string(bytes))
 			switch msgType {
 			case websocket.PingMessage:
 				log.Logger.Infof("c client recv ping message %s ", string(bytes))
@@ -70,7 +72,7 @@ func (c *Client) Read() {
 				c.recv <- RecvMsg{Type: websocket.BinaryMessage, Body: bytes}
 				break
 			default:
-				log.Logger.Warnf("unknown message %d", msgType)
+				log.Logger.Warnf("unknown message %d  %s ", msgType, string(bytes))
 			}
 
 		}
@@ -85,25 +87,19 @@ func (c *Client) Send(msg SendMsg) {
 	c.send <- msg
 }
 
-func (c *Client) isTimeOut() bool {
-	if int64(time.Now().Sub(c.heartTime).Seconds()) > c.intervalBeatTime {
-		return true
-	}
-	return false
-}
-
 func (c *Client) HeartBeat() {
+	timer := time.NewTicker(config.ServerHeartTime * time.Second)
 	for {
 		select {
 		case exit := <-c.exitH:
 			log.Logger.Warnf("c client exit heart beat  %s ", exit)
 			return
-		default:
-			time.Sleep(5 * time.Minute)
+		case <-timer.C:
 			err := c.socket.WriteMessage(websocket.PingMessage, []byte("hello"))
 			if err != nil {
 				log.Logger.Errorf("client ping message error %s ", err.Error())
 				c.close()
+				return
 			}
 
 		}
@@ -120,7 +116,8 @@ func (c *Client) Write() {
 			err := c.socket.WriteMessage(msg.Type, msg.Body)
 			if err != nil {
 				log.Logger.Errorf("c client Write error %s ", err.Error())
-				continue
+				c.close()
+				return
 			}
 			log.Logger.Debugf("c client Write : %d %s ", msg.Type, string(msg.Body))
 		}
@@ -141,5 +138,5 @@ func (c *Client) close() {
 	c.exitR <- "exit Read"
 	c.exitW <- "exit Write"
 	c.exitH <- "exit heart beat"
-	clientManager.UnRegister <- c
+	ClientManager.UnRegister <-c
 }

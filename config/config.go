@@ -14,3 +14,11 @@ const (
 	FileSyncAttr
 )
 const ConnPath = "/v1/conn"
+
+const ClientHeartTime = 4 * 60
+
+const ClientRetryConnectTime = 10
+
+const ServerHeartTime = 4 * 60
+
+const ServerRetryConnectTime = 10
